@@ -21,6 +21,7 @@ app.listen(app.get("port"), function () {
 });
 
 app.post("/registrar", function (req, res) {
+    var rpta = {};
     var nombre = req.body.nombre;
     var apellido = req.body.apellido;
     var telefono = req.body.telefono;
@@ -38,14 +39,23 @@ app.post("/registrar", function (req, res) {
     db.usuarios.insert(insert, function (err, docs) {
         if (err) {
             console.log(err);
-            res.send("Error Registro")
+            rpta = {
+                cod: 0,
+                msg: "Error"
+            };
+            res.send(rpta);
         } else {
-            res.send("Bien");
+            rpta = {
+                cod: 1,
+                msg: "Bien"
+            }
+            res.send(rpta);
         }
     })
 })
 
 app.post("/login", function (req, res) {
+    var rpta = {};
     var usuario = req.body.usuario;
     var password = req.body.password;
     var login = {
@@ -55,12 +65,24 @@ app.post("/login", function (req, res) {
     db.usuarios.findOne(login, function (err, doc) {
         if (err) {
             console.log(err);
-            res.send("Error Login");
+            rpta = {
+                cod: 0,
+                msg: "Error"
+            };
+            res.send(rpta);
         } else {
-            if(doc !== null){
-                res.send("Bien");
-            }else{
-                res.send("Casi");
+            if (doc !== null) {
+                rpta = {
+                    cod: 1,
+                    msg: "Bien"
+                }
+                res.send(rpta);
+            } else {
+                rpta = {
+                    cod: 2,
+                    msg: "Casi"
+                }
+                res.send(rpta);
             }
         }
     })
