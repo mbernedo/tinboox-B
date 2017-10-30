@@ -2,7 +2,14 @@ const express = require("express");
 const mongojs = require("mongojs");
 const bodyParser = require("body-parser");
 var app = express();
-var db = mongojs("mongodb://mbernedo:password@ds123534.mlab.com:23534/timboox", ["usuarios"]);
+var mysql = require('mysql');
+var pool = mysql.createPool({
+    host: "192.168.120.166",
+    user: "root",
+    password: "password",
+    database: "tinboox",
+    port: "3306"
+});
 
 app.set("port", (process.env.PORT || 3000));
 app.use(bodyParser.json());
@@ -33,10 +40,10 @@ app.post("/registrar", function (req, res) {
         apellido: apellido,
         telefono: telefono,
         email: email,
-        usuario: usuario,
+        user: usuario,
         password: password
     };
-    db.usuarios.insert(insert, function (err, docs) {
+    pool.query('INSERT INTO usuario SET ?', insert, function (err, results, fields) {
         if (err) {
             console.log(err);
             rpta = {
@@ -58,11 +65,7 @@ app.post("/login", function (req, res) {
     var rpta = {};
     var usuario = req.body.usuario;
     var password = req.body.password;
-    var login = {
-        usuario: usuario,
-        password: password
-    };
-    db.usuarios.findOne(login, function (err, doc) {
+    pool.query('SELECT * FROM usuario WHERE user=? AND password=?', [usuario, password], function (err, results, fields) {
         if (err) {
             console.log(err);
             rpta = {
@@ -71,7 +74,8 @@ app.post("/login", function (req, res) {
             };
             res.send(rpta);
         } else {
-            if (doc !== null) {
+            console.log(results);
+            if (results.length>0) {
                 rpta = {
                     cod: 1,
                     msg: "Bien"
