@@ -4,10 +4,10 @@ const bodyParser = require("body-parser");
 var app = express();
 var mysql = require('mysql');
 var pool = mysql.createPool({
-    host: "192.168.120.166",
+    host: "localhost",
     user: "root",
-    password: "password",
-    database: "tinboox",
+    password: "root",
+    database: "tesis",
     port: "3306"
 });
 
@@ -43,7 +43,7 @@ app.post("/registrar", function (req, res) {
         user: usuario,
         password: password
     };
-    pool.query('INSERT INTO usuario SET ?', insert, function (err, results, fields) {
+    pool.query('INSERT INTO usuarios SET ?', insert, function (err, results, fields) {
         if (err) {
             console.log(err);
             rpta = {
@@ -65,7 +65,7 @@ app.post("/login", function (req, res) {
     var rpta = {};
     var usuario = req.body.usuario;
     var password = req.body.password;
-    pool.query('SELECT * FROM usuario WHERE user=? AND password=?', [usuario, password], function (err, results, fields) {
+    pool.query('SELECT * FROM usuarios WHERE usuario=? AND password=?', [usuario, password], function (err, results, fields) {
         if (err) {
             console.log(err);
             rpta = {
@@ -74,9 +74,9 @@ app.post("/login", function (req, res) {
             };
             res.send(rpta);
         } else {
-            console.log(results);
-            if (results.length>0) {
+            if (results.length > 0) {
                 rpta = {
+                    idUser: results[0].idusuario,
                     cod: 1,
                     msg: "Bien"
                 }
@@ -90,4 +90,34 @@ app.post("/login", function (req, res) {
             }
         }
     })
+})
+
+app.post("/getBooks", function (req, res) {
+    var rpta = {};
+    var obj = [];
+    var idUser = req.body.idUser;
+    pool.query("", [idUser], function (err, results, fields) {
+        if (err) {
+            rpta = {
+                cod: 0,
+                msg: "Error"
+            };
+            res.send(rpta);
+        } else {
+            if (results.length > 0) {
+                rpta = {
+                    idLibro:
+                    cod: 1,
+                    msg: "Bien"
+                }
+                res.send(rpta);
+            } else {
+                rpta = {
+                    cod: 2,
+                    msg: "Casi"
+                }
+                res.send(rpta);
+            }
+        }
+    });
 })
