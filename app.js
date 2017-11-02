@@ -94,30 +94,42 @@ app.post("/login", function (req, res) {
 
 app.post("/getBooks", function (req, res) {
     var rpta = {};
+    var datos = {};
     var obj = [];
     var idUser = req.body.idUser;
-    pool.query("", [idUser], function (err, results, fields) {
-        if (err) {
-            rpta = {
-                cod: 0,
-                msg: "Error"
-            };
-            res.send(rpta);
-        } else {
-            if (results.length > 0) {
+    pool.query("SELECT l.idlibro,l.titulo, g.nombre as genero FROM libros l " +
+        "join usuariolibro ul on l.idlibro<>ul.idlibro " +
+        "join generos g on l.genero=g.idgenero " +
+        "where ul.idusuario=?", [idUser], function (err, results, fields) {
+            if (err) {
                 rpta = {
-                    idLibro:
-                    cod: 1,
-                    msg: "Bien"
-                }
+                    cod: 0,
+                    msg: "Error"
+                };
                 res.send(rpta);
             } else {
-                rpta = {
-                    cod: 2,
-                    msg: "Casi"
+                if (results.length > 0) {
+                    results.forEach(function (item, index) {
+                        datos = {
+                            idBook: item.idlibro,
+                            titulo: item.titulo,
+                            genero: item.genero
+                        }
+                        obj.push(datos);
+                    });
+                    rpta = {
+                        cod: 1,
+                        msg: "Bien",
+                        data: obj
+                    };
+                    res.send(rpta);
+                } else {
+                    rpta = {
+                        cod: 2,
+                        msg: "Casi"
+                    }
+                    res.send(rpta);
                 }
-                res.send(rpta);
             }
-        }
-    });
+        });
 })
