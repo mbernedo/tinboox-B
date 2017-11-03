@@ -92,11 +92,11 @@ app.post("/login", function (req, res) {
     })
 })
 
-app.post("/getBooks", function (req, res) {
+app.get("/getBooks", function (req, res) {
     var rpta = {};
     var datos = {};
     var obj = [];
-    var idUser = req.body.idUser;
+    var idUser = req.query.idUser;
     pool.query("SELECT l.idlibro,l.titulo, g.nombre as genero FROM libros l " +
         "join usuariolibro ul on l.idlibro<>ul.idlibro " +
         "join generos g on l.genero=g.idgenero " +
