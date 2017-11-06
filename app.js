@@ -4,9 +4,9 @@ const bodyParser = require("body-parser");
 var app = express();
 var mysql = require('mysql');
 var pool = mysql.createPool({
-    host: "localhost",
+    host: "192.168.120.166",
     user: "root",
-    password: "root",
+    password: "password",
     database: "tesis",
     port: "3306"
 });
@@ -97,10 +97,10 @@ app.get("/getBooks", function (req, res) {
     var datos = {};
     var obj = [];
     var idUser = req.query.idUser;
-    pool.query("SELECT l.idlibro,l.titulo, g.nombre as genero FROM libros l " +
-        "join usuariolibro ul on l.idlibro<>ul.idlibro " +
+    pool.query("select l.idlibro as idlibro, l.titulo as titulo, g.nombre as genero from libros l " +
         "join generos g on l.genero=g.idgenero " +
-        "where ul.idusuario=?", [idUser], function (err, results, fields) {
+        "where l.idlibro  not in (select idlibro " +
+        "from usuariolibro where idusuario=?)", [idUser], function (err, results, fields) {
             if (err) {
                 rpta = {
                     cod: 0,
