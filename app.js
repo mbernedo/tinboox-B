@@ -1,6 +1,7 @@
 const express = require("express");
 const mongojs = require("mongojs");
 const bodyParser = require("body-parser");
+var ml = require('machine_learning');
 var app = express();
 var mysql = require('mysql');
 var pool = mysql.createPool({
@@ -133,3 +134,61 @@ app.get("/getBooks", function (req, res) {
             }
         });
 })
+
+app.post("/valorar", function (req, res) {
+    var user = req.body.usuario;
+    var libro = req.body.libro;
+    var rpta = {};
+    var insert = {
+        idusuario: user,
+        idlibro: libro
+    };
+    pool.query("INSERT INTO usuariolibro SET ?", insert, function (err, results, fields) {
+        if (err) {
+            rpta = {
+                cod: 0,
+                msg: "Error"
+            };
+            res.send(rpta);
+        } else {
+            if (results.affectedRows > 0) {
+                rpta = {
+                    cod: 1,
+                    msg: "Bien"
+                }
+                res.send(rpta);
+            } else {
+                rpta = {
+                    cod: 2,
+                    msg: "Casi"
+                }
+                res.send(rpta);
+            }
+        }
+    })
+})
+
+var data = [];
+var obj = [];
+pool.query("SELECT ul.idusuario, ul.idlibro, l.numeropag, l.genero, l.editorial, l.autor FROM usuariolibro ul " +
+    "join libros l on ul.idlibro=l.idlibro", function (err, results, fields) {
+        if (err) {
+            console.log(err);
+        } else {
+            if (results.length > 0) {
+                results.forEach(function (item, index) {
+                    data = [item.idusuario, item.idlibro, item.numeropag, item.genero, item.editorial, item.autor];
+                    obj.push(data);
+                });
+                var result = ml.kmeans.cluster({
+                    data: obj,
+                    k: 5,
+                    epochs: 100,
+                    distance: { type: "euclidean" }
+                });
+                console.log("means: ", result.means);
+            } else {
+                console.log("casi");
+            }
+        }
+    })
