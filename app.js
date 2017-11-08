@@ -5,10 +5,10 @@ var ml = require('machine_learning');
 var app = express();
 var mysql = require('mysql');
 var pool = mysql.createPool({
-    host: "192.168.120.166",
-    user: "root",
+    host: "mysql.us.cloudlogin.co",
+    user: "pachuco65_tesis",
     password: "password",
-    database: "tesis",
+    database: "pachuco65_tesis",
     port: "3306"
 });
 
@@ -186,7 +186,7 @@ pool.query("SELECT ul.idusuario, ul.idlibro, l.numeropag, l.genero, l.editorial,
                     epochs: 100,
                     distance: { type: "euclidean" }
                 });
-                console.log("means: ", result.means);
+                console.log("means: ", result.clusters);
             } else {
                 console.log("casi");
             }
