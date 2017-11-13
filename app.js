@@ -168,27 +168,81 @@ app.post("/valorar", function (req, res) {
     })
 })
 
-var data = [];
-var obj = [];
-pool.query("SELECT ul.idusuario, ul.idlibro, l.numeropag, l.genero, l.editorial, l.autor FROM usuariolibro ul " +
-    "join libros l on ul.idlibro=l.idlibro", function (err, results, fields) {
-        if (err) {
-            console.log(err);
-        } else {
-            if (results.length > 0) {
-                results.forEach(function (item, index) {
-                    data = [item.idusuario, item.idlibro, item.numeropag, item.genero, item.editorial, item.autor];
-                    obj.push(data);
-                });
-                var result = ml.kmeans.cluster({
-                    data: obj,
-                    k: 5,
-                    epochs: 100,
-                    distance: { type: "euclidean" }
-                });
-                console.log("means: ", result.clusters);
+app.get("/kmean", function (req, res) {
+    var data = [];
+    var obj = [];
+    pool.query("SELECT ul.idusuario, ul.idlibro, l.numeropag, l.genero, l.editorial, l.autor FROM usuariolibro ul " +
+        "join libros l on ul.idlibro=l.idlibro", function (err, results, fields) {
+            if (err) {
+                res.send("error");
             } else {
-                console.log("casi");
+                if (results.length > 0) {
+                    results.forEach(function (item, index) {
+                        data = [item.idusuario, item.idlibro, item.numeropag, item.genero, item.editorial, item.autor];
+                        obj.push(data);
+                    });
+                    var result = ml.kmeans.cluster({
+                        data: obj,
+                        k: 5,
+                        epochs: 100,
+                        distance: { type: "euclidean" }
+                    });
+                    var insert = [];
+                    var obj2 = [];
+                    var cluster = result.clusters;
+                    cluster.forEach(function (clust, index) {
+                        clust.forEach(function (val, index2) {
+                            obj2 = [val + 1, index];
+                            insert.push(obj2);
+                        })
+                    });
+                    pool.query("DELETE FROM clusters", function (err, results, fields) {
+                        pool.query("INSERT INTO clusters (idsuariolibro, cluster) VALUES ?", [insert], function (err, resul, field) {
+                            if (err) {
+                                res.send("error2");
+                            } else {
+                                res.send("ok");
+                            }
+                        })
+                    });
+                } else {
+                    res.send("error3");
+                }
             }
-        }
-    })
+        })
+})
+
+app.get("/getClusters", function (req, res) {
+    var rpta = {};
+    var datos = {};
+    var obj = [];
+    var idUser = req.query.idUser;
+    pool.query("select u.nombre, u.apellido, u.telefono from clusters c " +
+        "join usuariolibro ul on c.idsuariolibro=ul.idusuariolibro " +
+        "join usuarios u on ul.idusuario=u.idusuario " +
+        "where c.cluster in (select DISTINCT c.cluster from clusters c " +
+        "join usuariolibro ul on c.idsuariolibro=ul.idusuariolibro " +
+        "where ul.idusuario=?) and ul.idusuario<>?", [idUser, idUser], function (err, results, fields) {
+            if (err) {
+                rpta = {
+                    cod: 0,
+                    msg: "Error"
+                };
+                res.send(rpta);
+            } else {
+                results.forEach(function (item, index) {
+                    datos = {
+                        nombre: item.nombre,
+                        apellido: item.apellido,
+                        telefono: item.telefono
+                    }
+                    obj.push(datos);
+                });
+                rpta = {
+                    cod: 1,
+                    data: obj
+                }
+                res.send(rpta);
+            }
+        })
+});
