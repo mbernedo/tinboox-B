@@ -41,7 +41,7 @@ app.post("/registrar", function (req, res) {
         apellido: apellido,
         telefono: telefono,
         email: email,
-        user: usuario,
+        usuario: usuario,
         password: password
     };
     pool.query('INSERT INTO usuarios SET ?', insert, function (err, results, fields) {
