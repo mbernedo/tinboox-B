@@ -217,7 +217,7 @@ app.get("/getClusters", function (req, res) {
     var datos = {};
     var obj = [];
     var idUser = req.query.idUser;
-    pool.query("select u.nombre, u.apellido, u.telefono from clusters c " +
+    pool.query("select distinct u.nombre, u.apellido, u.telefono from clusters c " +
         "join usuariolibro ul on c.idsuariolibro=ul.idusuariolibro " +
         "join usuarios u on ul.idusuario=u.idusuario " +
         "where c.cluster in (select DISTINCT c.cluster from clusters c " +
