@@ -183,7 +183,7 @@ app.get("/kmean", function (req, res) {
                     });
                     var result = ml.kmeans.cluster({
                         data: obj,
-                        k: 5,
+                        k: 7,
                         epochs: 100,
                         distance: { type: "euclidean" }
                     });
@@ -246,3 +246,45 @@ app.get("/getClusters", function (req, res) {
             }
         })
 });
+
+app.get("/getMyBooks", function (req, res) {
+    var idUser = req.query.idusuario;
+    var rpta = {};
+    var datos = {};
+    var obj = [];
+    pool.query("SELECT l.idlibro, l.titulo, g.nombre as genero FROM usuariolibro ul " +
+        "join libros l on ul.idlibro=l.idlibro " +
+        "join generos g on l.genero=g.idgenero " +
+        "WHERE idusuario=?", [idUser], function (err, results, fields) {
+            if (err) {
+                rpta = {
+                    cod: 0,
+                    msg: "Error"
+                };
+                res.send(rpta);
+            } else {
+                if (results.length > 0) {
+                    results.forEach(function (item, index) {
+                        datos = {
+                            idBook: item.idlibro,
+                            titulo: item.titulo,
+                            genero: item.genero
+                        }
+                        obj.push(datos);
+                    });
+                    rpta = {
+                        cod: 1,
+                        msg: "Bien",
+                        data: obj
+                    };
+                    res.send(rpta);
+                } else {
+                    rpta = {
+                        cod: 2,
+                        msg: "Casi"
+                    }
+                    res.send(rpta);
+                }
+            }
+        });
+})
