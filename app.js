@@ -183,7 +183,7 @@ app.get("/kmean", function (req, res) {
                     });
                     var result = ml.kmeans.cluster({
                         data: obj,
-                        k: 7,
+                        k: 10,
                         epochs: 100,
                         distance: { type: "euclidean" }
                     });
