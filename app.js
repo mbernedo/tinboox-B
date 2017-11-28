@@ -98,10 +98,12 @@ app.get("/getBooks", function (req, res) {
     var datos = {};
     var obj = [];
     var idUser = req.query.idUser;
-    pool.query("select l.idlibro as idlibro, l.titulo as titulo, g.nombre as genero from libros l " +
+    pool.query("select l.idlibro as idlibro, l.titulo as titulo, l.numeropag as numpag, g.nombre as genero, e.nombre as editorial, a.nombre as autor from libros l " +
         "join generos g on l.genero=g.idgenero " +
+        "join editoriales e on l.editorial=e.ideditorial " +
+        "join autores a on a.idautor=l.autor " +
         "where l.idlibro  not in (select idlibro " +
-        "from usuariolibro where idusuario=?)", [idUser], function (err, results, fields) {
+        "from usuariolibro where idusuario=1)", [idUser], function (err, results, fields) {
             if (err) {
                 rpta = {
                     cod: 0,
@@ -114,7 +116,10 @@ app.get("/getBooks", function (req, res) {
                         datos = {
                             idBook: item.idlibro,
                             titulo: item.titulo,
-                            genero: item.genero
+                            numpag: item.numpag,
+                            genero: item.genero,
+                            editorial: item.editorial,
+                            autor: item.autor
                         }
                         obj.push(datos);
                     });
