@@ -178,7 +178,7 @@ app.get("/kmean", function (req, res) {
             } else {
                 if (results.length > 0) {
                     results.forEach(function (item, index) {
-                        data = [item.idusuario, item.idlibro, item.numeropag, item.genero, item.editorial, item.autor];
+                        data = [item.idlibro, item.numeropag, item.genero, item.editorial, item.autor];
                         obj.push(data);
                     });
                     var result = ml.kmeans.cluster({
