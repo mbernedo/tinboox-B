@@ -103,7 +103,7 @@ app.get("/getBooks", function (req, res) {
         "join editoriales e on l.editorial=e.ideditorial " +
         "join autores a on a.idautor=l.autor " +
         "where l.idlibro  not in (select idlibro " +
-        "from usuariolibro where idusuario=1)", [idUser], function (err, results, fields) {
+        "from usuariolibro where idusuario=?)", [idUser], function (err, results, fields) {
             if (err) {
                 rpta = {
                     cod: 0,
@@ -176,14 +176,14 @@ app.post("/valorar", function (req, res) {
 app.get("/kmean", function (req, res) {
     var data = [];
     var obj = [];
-    pool.query("SELECT ul.idusuario, ul.idlibro, l.numeropag, l.genero, l.editorial, l.autor FROM usuariolibro ul " +
-        "join libros l on ul.idlibro=l.idlibro", function (err, results, fields) {
+    pool.query("SELECT l.numeropag, l.genero, l.editorial, l.autor FROM usuariolibro ul " +
+        "join libros l on ul.idlibro=l.idlibro order by ul.idusuario", function (err, results, fields) {
             if (err) {
                 res.send("error");
             } else {
                 if (results.length > 0) {
                     results.forEach(function (item, index) {
-                        data = [item.idlibro, item.numeropag, item.genero, item.editorial, item.autor];
+                        data = [item.numeropag, item.genero, item.editorial, item.autor];
                         obj.push(data);
                     });
                     var result = ml.kmeans.cluster({
@@ -222,7 +222,7 @@ app.get("/getClusters", function (req, res) {
     var datos = {};
     var obj = [];
     var idUser = req.query.idUser;
-    pool.query("select distinct u.idusuario, u.nombre, u.apellido, u.telefono from clusters c " +
+    pool.query("select distinct u.idusuario, u.nombre, u.apellido from clusters c " +
         "join usuariolibro ul on c.idsuariolibro=ul.idusuariolibro " +
         "join usuarios u on ul.idusuario=u.idusuario " +
         "where c.cluster in (select DISTINCT c.cluster from clusters c " +
@@ -258,9 +258,11 @@ app.get("/getMyBooks", function (req, res) {
     var rpta = {};
     var datos = {};
     var obj = [];
-    pool.query("SELECT l.idlibro, l.titulo, g.nombre as genero FROM usuariolibro ul " +
+    pool.query("SELECT l.idlibro, l.titulo, g.nombre as genero, l.numeropag as numpag, e.nombre as editorial, a.nombre as autor FROM usuariolibro ul " +
         "join libros l on ul.idlibro=l.idlibro " +
         "join generos g on l.genero=g.idgenero " +
+        "join editoriales e on l.editorial=e.ideditorial " +
+        "join autores a on l.autor=a.idautor " +
         "WHERE idusuario=?", [idUser], function (err, results, fields) {
             if (err) {
                 rpta = {
