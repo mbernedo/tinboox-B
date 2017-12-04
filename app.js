@@ -98,10 +98,13 @@ app.get("/getBooks", function (req, res) {
     var datos = {};
     var obj = [];
     var idUser = req.query.idUser;
-    pool.query("select l.idlibro as idlibro, l.titulo as titulo, g.nombre as genero from libros l " +
+    pool.query("select l.idlibro as idlibro, l.titulo as titulo, g.nombre as genero, l.numeropag as numpag, " +
+        "e.nombre as editorial, a.nombre as autor from libros l " +
         "join generos g on l.genero=g.idgenero " +
+        "join editoriales e on l.editorial=e.ideditorial " +
+        "join autores a on l.autor=a.idautor " +
         "where l.idlibro  not in (select idlibro " +
-        "from usuariolibro where idusuario=?)", [idUser], function (err, results, fields) {
+        "from usuariolibro where idusuario=1)", [idUser], function (err, results, fields) {
             if (err) {
                 rpta = {
                     cod: 0,
@@ -114,7 +117,10 @@ app.get("/getBooks", function (req, res) {
                         datos = {
                             idBook: item.idlibro,
                             titulo: item.titulo,
-                            genero: item.genero
+                            genero: item.genero,
+                            numpag: item.numpag,
+                            editorial: item.editorial,
+                            autor: item.autor
                         }
                         obj.push(datos);
                     });
@@ -253,10 +259,13 @@ app.get("/getMyBooks", function (req, res) {
     var rpta = {};
     var datos = {};
     var obj = [];
-    pool.query("SELECT l.idlibro, l.titulo, g.nombre as genero FROM usuariolibro ul " +
+    pool.query("SELECT l.idlibro, l.titulo, g.nombre as genero, l.numeropag as numpag, " +
+        "e.nombre as editorial, a.nombre as autor FROM usuariolibro ul " +
         "join libros l on ul.idlibro=l.idlibro " +
         "join generos g on l.genero=g.idgenero " +
-        "WHERE idusuario=?", [idUser], function (err, results, fields) {
+        "join editoriales e on l.editorial=e.ideditorial " +
+        "join autores a on l.autor=a.idautor " +
+        "WHERE idusuario=1", [idUser], function (err, results, fields) {
             if (err) {
                 rpta = {
                     cod: 0,
@@ -269,7 +278,10 @@ app.get("/getMyBooks", function (req, res) {
                         datos = {
                             idBook: item.idlibro,
                             titulo: item.titulo,
-                            genero: item.genero
+                            genero: item.genero,
+                            numpag: item.numpag,
+                            editorial: item.editorial,
+                            autor: item.autor
                         }
                         obj.push(datos);
                     });
