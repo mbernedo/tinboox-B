@@ -177,14 +177,14 @@ app.post("/valorar", function (req, res) {
 app.get("/kmean", function (req, res) {
     var data = [];
     var obj = [];
-    pool.query("SELECT ul.idusuario, ul.idlibro, l.numeropag, l.genero, l.editorial, l.autor FROM usuariolibro ul " +
+    pool.query("SELECT l.numeropag, l.genero, l.editorial, l.autor FROM usuariolibro ul " +
         "join libros l on ul.idlibro=l.idlibro", function (err, results, fields) {
             if (err) {
                 res.send("error");
             } else {
                 if (results.length > 0) {
                     results.forEach(function (item, index) {
-                        data = [item.idlibro, item.numeropag, item.genero, item.editorial, item.autor];
+                        data = [item.genero, item.numeropag, item.editorial, item.autor];
                         obj.push(data);
                     });
                     var result = ml.kmeans.cluster({
