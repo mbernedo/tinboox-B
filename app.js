@@ -98,10 +98,11 @@ app.get("/getBooks", function (req, res) {
     var datos = {};
     var obj = [];
     var idUser = req.query.idUser;
-    pool.query("select l.idlibro as idlibro, l.titulo as titulo, l.numeropag as numpag, g.nombre as genero, e.nombre as editorial, a.nombre as autor from libros l " +
+    pool.query("select l.idlibro as idlibro, l.titulo as titulo, g.nombre as genero, l.numeropag as numpag, " +
+        "e.nombre as editorial, a.nombre as autor from libros l " +
         "join generos g on l.genero=g.idgenero " +
         "join editoriales e on l.editorial=e.ideditorial " +
-        "join autores a on a.idautor=l.autor " +
+        "join autores a on l.autor=a.idautor " +
         "where l.idlibro  not in (select idlibro " +
         "from usuariolibro where idusuario=?)", [idUser], function (err, results, fields) {
             if (err) {
@@ -116,8 +117,8 @@ app.get("/getBooks", function (req, res) {
                         datos = {
                             idBook: item.idlibro,
                             titulo: item.titulo,
-                            numpag: item.numpag,
                             genero: item.genero,
+                            numpag: item.numpag,
                             editorial: item.editorial,
                             autor: item.autor
                         }
@@ -176,14 +177,14 @@ app.post("/valorar", function (req, res) {
 app.get("/kmean", function (req, res) {
     var data = [];
     var obj = [];
-    pool.query("SELECT l.numeropag, l.genero, l.editorial, l.autor FROM usuariolibro ul " +
-        "join libros l on ul.idlibro=l.idlibro order by ul.idusuario", function (err, results, fields) {
+    pool.query("SELECT ul.idusuariolibro, l.numeropag, l.genero, l.editorial, l.autor FROM usuariolibro ul " +
+        "join libros l on ul.idlibro=l.idlibro order by ul.idusuariolibro", function (err, results, fields) {
             if (err) {
                 res.send("error");
             } else {
                 if (results.length > 0) {
                     results.forEach(function (item, index) {
-                        data = [item.numeropag, item.genero, item.editorial, item.autor];
+                        data = [item.genero, item.numeropag, item.editorial];
                         obj.push(data);
                     });
                     var result = ml.kmeans.cluster({
@@ -202,13 +203,23 @@ app.get("/kmean", function (req, res) {
                         })
                     });
                     pool.query("DELETE FROM clusters", function (err, results, fields) {
-                        pool.query("INSERT INTO clusters (idsuariolibro, cluster) VALUES ?", [insert], function (err, resul, field) {
-                            if (err) {
-                                res.send("error2");
-                            } else {
-                                res.send("ok");
-                            }
-                        })
+                        if (err) {
+                            console.log(err);
+                        } else {
+                            pool.query("ALTER TABLE clusters AUTO_INCREMENT=1", function (err, results, fields) {
+                                if (err) {
+                                    console.log(err);
+                                } else {
+                                    pool.query("INSERT INTO clusters (idsuariolibro, cluster) VALUES ?", [insert], function (err, resul, field) {
+                                        if (err) {
+                                            res.send("error2");
+                                        } else {
+                                            res.send("ok");
+                                        }
+                                    })
+                                }
+                            })
+                        }
                     });
                 } else {
                     res.send("error3");
@@ -258,7 +269,8 @@ app.get("/getMyBooks", function (req, res) {
     var rpta = {};
     var datos = {};
     var obj = [];
-    pool.query("SELECT l.idlibro, l.titulo, g.nombre as genero, l.numeropag as numpag, e.nombre as editorial, a.nombre as autor FROM usuariolibro ul " +
+    pool.query("SELECT l.idlibro, l.titulo, g.nombre as genero, l.numeropag as numpag, " +
+        "e.nombre as editorial, a.nombre as autor FROM usuariolibro ul " +
         "join libros l on ul.idlibro=l.idlibro " +
         "join generos g on l.genero=g.idgenero " +
         "join editoriales e on l.editorial=e.ideditorial " +
@@ -276,7 +288,10 @@ app.get("/getMyBooks", function (req, res) {
                         datos = {
                             idBook: item.idlibro,
                             titulo: item.titulo,
-                            genero: item.genero
+                            genero: item.genero,
+                            numpag: item.numpag,
+                            editorial: item.editorial,
+                            autor: item.autor
                         }
                         obj.push(datos);
                     });
