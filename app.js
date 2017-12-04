@@ -104,7 +104,7 @@ app.get("/getBooks", function (req, res) {
         "join editoriales e on l.editorial=e.ideditorial " +
         "join autores a on l.autor=a.idautor " +
         "where l.idlibro  not in (select idlibro " +
-        "from usuariolibro where idusuario=1)", [idUser], function (err, results, fields) {
+        "from usuariolibro where idusuario=?)", [idUser], function (err, results, fields) {
             if (err) {
                 rpta = {
                     cod: 0,
@@ -265,7 +265,7 @@ app.get("/getMyBooks", function (req, res) {
         "join generos g on l.genero=g.idgenero " +
         "join editoriales e on l.editorial=e.ideditorial " +
         "join autores a on l.autor=a.idautor " +
-        "WHERE idusuario=1", [idUser], function (err, results, fields) {
+        "WHERE idusuario=?", [idUser], function (err, results, fields) {
             if (err) {
                 rpta = {
                     cod: 0,
