@@ -1,5 +1,6 @@
 const express = require("express");
 const mongojs = require("mongojs");
+const kmeds = require("k-medoids");
 const bodyParser = require("body-parser");
 var ml = require('machine_learning');
 var app = express();
@@ -233,35 +234,68 @@ app.get("/getClusters", function (req, res) {
     var datos = {};
     var obj = [];
     var idUser = req.query.idUser;
-    pool.query("select distinct u.idusuario, u.nombre, u.apellido from clusters c " +
-        "join usuariolibro ul on c.idsuariolibro=ul.idusuariolibro " +
-        "join usuarios u on ul.idusuario=u.idusuario " +
-        "where c.cluster in (select DISTINCT c.cluster from clusters c " +
-        "join usuariolibro ul on c.idsuariolibro=ul.idusuariolibro " +
-        "where ul.idusuario=?) and ul.idusuario<>?", [idUser, idUser], function (err, results, fields) {
-            if (err) {
-                rpta = {
-                    cod: 0,
-                    msg: "Error"
-                };
-                res.send(rpta);
-            } else {
-                results.forEach(function (item, index) {
-                    datos = {
-                        idusuario: item.idusuario,
-                        nombre: item.nombre,
-                        apellido: item.apellido,
-                        telefono: item.telefono
+    var tipo = req.query.tipo;
+    if (tipo = "kmean") {
+        pool.query("select distinct u.idusuario, u.nombre, u.apellido from clusters c " +
+            "join usuariolibro ul on c.idsuariolibro=ul.idusuariolibro " +
+            "join usuarios u on ul.idusuario=u.idusuario " +
+            "where c.cluster in (select DISTINCT c.cluster from clusters c " +
+            "join usuariolibro ul on c.idsuariolibro=ul.idusuariolibro " +
+            "where ul.idusuario=?) and ul.idusuario<>?", [idUser, idUser], function (err, results, fields) {
+                if (err) {
+                    rpta = {
+                        cod: 0,
+                        msg: "Error"
+                    };
+                    res.send(rpta);
+                } else {
+                    results.forEach(function (item, index) {
+                        datos = {
+                            idusuario: item.idusuario,
+                            nombre: item.nombre,
+                            apellido: item.apellido,
+                            telefono: item.telefono
+                        }
+                        obj.push(datos);
+                    });
+                    rpta = {
+                        cod: 1,
+                        data: obj
                     }
-                    obj.push(datos);
-                });
-                rpta = {
-                    cod: 1,
-                    data: obj
+                    res.send(rpta);
                 }
-                res.send(rpta);
-            }
-        })
+            })
+    } else if (tipo = "kmedoid") {
+        pool.query("select distinct u.idusuario, u.nombre, u.apellido from clusters2 c " +
+            "join usuariolibro ul on c.idusuariolibro=ul.idusuariolibro " +
+            "join usuarios u on ul.idusuario=u.idusuario " +
+            "where c.cluster in (select DISTINCT c.cluster from clusters2 c " +
+            "join usuariolibro ul on c.idusuariolibro=ul.idusuariolibro " +
+            "where ul.idusuario=?) and ul.idusuario<>?", [idUser, idUser], function (err, results, fields) {
+                if (err) {
+                    rpta = {
+                        cod: 0,
+                        msg: "Error"
+                    };
+                    res.send(rpta);
+                } else {
+                    results.forEach(function (item, index) {
+                        datos = {
+                            idusuario: item.idusuario,
+                            nombre: item.nombre,
+                            apellido: item.apellido,
+                            telefono: item.telefono
+                        }
+                        obj.push(datos);
+                    });
+                    rpta = {
+                        cod: 1,
+                        data: obj
+                    }
+                    res.send(rpta);
+                }
+            })
+    }
 });
 
 app.get("/getMyBooks", function (req, res) {
@@ -310,4 +344,55 @@ app.get("/getMyBooks", function (req, res) {
                 }
             }
         });
+})
+
+app.get("/kmedoid", function (req, res) {
+    var data = [];
+    var obj = [];
+    pool.query("SELECT ul.idusuariolibro, u.idusuario as usuario, l.numeropag, l.genero, l.editorial, l.autor FROM usuariolibro ul " +
+        "join libros l on ul.idlibro=l.idlibro " +
+        "join usuarios u on ul.idusuario=u.idusuario order by ul.idusuariolibro", function (err, results, fields) {
+            if (err) {
+                res.send("error");
+            } else {
+                if (results.length > 0) {
+                    results.forEach(function (item, index) {
+                        data = [item.usuario, item.genero, item.numeropag, item.editorial];
+                        obj.push(data);
+                    });
+                    const clusterer = kmeds.Clusterer.getInstance(obj, 10);
+                    const clusteredData = clusterer.getClusteredData();
+                    var insert = [];
+                    var obj2 = [];
+                    clusteredData.forEach(function (clust, index) {
+                        clust.forEach(function (val, index2) {
+                            obj2 = [val[0], index];
+                            insert.push(obj2);
+                        })
+                    });
+                    pool.query("DELETE FROM clusters2", function (err, results, fields) {
+                        if (err) {
+                            console.log(err);
+                        } else {
+                            pool.query("ALTER TABLE clusters2 AUTO_INCREMENT=1", function (err, results, fields) {
+                                if (err) {
+                                    console.log(err);
+                                } else {
+                                    pool.query("INSERT INTO clusters2 (idusuariolibro, cluster) VALUES ?", [insert], function (err, resul, field) {
+                                        if (err) {
+                                            console.log(err);
+                                            res.send("error2");
+                                        } else {
+                                            res.send("ok");
+                                        }
+                                    })
+                                }
+                            })
+                        }
+                    });
+                } else {
+                    res.send("error3");
+                }
+            }
+        })
 })
