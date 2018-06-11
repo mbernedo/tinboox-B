@@ -3,6 +3,8 @@ const mongojs = require("mongojs");
 const kmeds = require("k-medoids");
 const bodyParser = require("body-parser");
 var ml = require('machine_learning');
+var clustering = require("density-clustering");
+var dbscan = new clustering.DBSCAN();
 var app = express();
 var mysql = require('mysql');
 var pool = mysql.createPool({
@@ -390,6 +392,55 @@ app.get("/kmedoid", function (req, res) {
                             })
                         }
                     });
+                } else {
+                    res.send("error3");
+                }
+            }
+        })
+})
+
+app.get("/dbscan", function (req, res) {
+    var data = [];
+    var obj = [];
+    pool.query("SELECT ul.idusuariolibro, l.numeropag, l.genero, l.editorial, l.autor FROM usuariolibro ul " +
+        "join libros l on ul.idlibro=l.idlibro order by ul.idusuariolibro", function (err, results, fields) {
+            if (err) {
+                res.send("error");
+            } else {
+                if (results.length > 0) {
+                    results.forEach(function (item, index) {
+                        data = [item.genero, item.numeropag, item.editorial];
+                        obj.push(data);
+                    });
+                    var clusters = dbscan.run(obj, 52, 2);
+                    var insert = [];
+                    var obj2 = [];
+                    var cluster = result.clusters;
+                    cluster.forEach(function (clust, index) {
+                        clust.forEach(function (val, index2) {
+                            obj2 = [val + 1, index];
+                            insert.push(obj2);
+                        })
+                    });
+                    /*pool.query("DELETE FROM clusters", function (err, results, fields) {
+                        if (err) {
+                            console.log(err);
+                        } else {
+                            pool.query("ALTER TABLE clusters AUTO_INCREMENT=1", function (err, results, fields) {
+                                if (err) {
+                                    console.log(err);
+                                } else {
+                                    pool.query("INSERT INTO clusters (idsuariolibro, cluster) VALUES ?", [insert], function (err, resul, field) {
+                                        if (err) {
+                                            res.send("error2");
+                                        } else {
+                                            res.send("ok");
+                                        }
+                                    })
+                                }
+                            })
+                        }
+                    });*/
                 } else {
                     res.send("error3");
                 }
