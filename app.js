@@ -297,6 +297,36 @@ app.get("/getClusters", function (req, res) {
                     res.send(rpta);
                 }
             })
+    }else if (tipo = "dbscan") {
+        pool.query("select distinct u.idusuario, u.nombre, u.apellido from clusters3 c " +
+            "join usuariolibro ul on c.idusuariolibro=ul.idusuariolibro " +
+            "join usuarios u on ul.idusuario=u.idusuario " +
+            "where c.cluster in (select DISTINCT c.cluster from clusters3 c " +
+            "join usuariolibro ul on c.idusuariolibro=ul.idusuariolibro " +
+            "where ul.idusuario=?) and ul.idusuario<>?", [idUser, idUser], function (err, results, fields) {
+                if (err) {
+                    rpta = {
+                        cod: 0,
+                        msg: "Error"
+                    };
+                    res.send(rpta);
+                } else {
+                    results.forEach(function (item, index) {
+                        datos = {
+                            idusuario: item.idusuario,
+                            nombre: item.nombre,
+                            apellido: item.apellido,
+                            telefono: item.telefono
+                        }
+                        obj.push(datos);
+                    });
+                    rpta = {
+                        cod: 1,
+                        data: obj
+                    }
+                    res.send(rpta);
+                }
+            })
     }
 });
 
@@ -402,35 +432,35 @@ app.get("/kmedoid", function (req, res) {
 app.get("/dbscan", function (req, res) {
     var data = [];
     var obj = [];
-    pool.query("SELECT ul.idusuariolibro, l.numeropag, l.genero, l.editorial, l.autor FROM usuariolibro ul " +
-        "join libros l on ul.idlibro=l.idlibro order by ul.idusuariolibro", function (err, results, fields) {
+    pool.query("SELECT ul.idusuariolibro, u.idusuario as usuario, l.numeropag, l.genero, l.editorial, l.autor FROM usuariolibro ul " +
+    "join libros l on ul.idlibro=l.idlibro " +
+    "join usuarios u on ul.idusuario=u.idusuario order by ul.idusuariolibro", function (err, results, fields) {
             if (err) {
                 res.send("error");
             } else {
                 if (results.length > 0) {
                     results.forEach(function (item, index) {
-                        data = [item.genero, item.numeropag, item.editorial];
+                        data = [item.usuario, item.genero, item.numeropag, item.editorial];
                         obj.push(data);
                     });
-                    var clusters = dbscan.run(obj, 52, 2);
+                    var clusters = dbscan.run(obj, 10, 3);
                     var insert = [];
                     var obj2 = [];
-                    var cluster = result.clusters;
-                    cluster.forEach(function (clust, index) {
-                        clust.forEach(function (val, index2) {
-                            obj2 = [val + 1, index];
+                    clusters.forEach(function(clust, index){
+                        clust.forEach(function(item, index2){
+                            obj2=[obj[item][0],index];
                             insert.push(obj2);
                         })
-                    });
-                    /*pool.query("DELETE FROM clusters", function (err, results, fields) {
+                    })
+                    pool.query("DELETE FROM clusters3", function (err, results, fields) {
                         if (err) {
                             console.log(err);
                         } else {
-                            pool.query("ALTER TABLE clusters AUTO_INCREMENT=1", function (err, results, fields) {
+                            pool.query("ALTER TABLE clusters3 AUTO_INCREMENT=1", function (err, results, fields) {
                                 if (err) {
                                     console.log(err);
                                 } else {
-                                    pool.query("INSERT INTO clusters (idsuariolibro, cluster) VALUES ?", [insert], function (err, resul, field) {
+                                    pool.query("INSERT INTO clusters3 (idusuariolibro, cluster) VALUES ?", [insert], function (err, resul, field) {
                                         if (err) {
                                             res.send("error2");
                                         } else {
@@ -440,7 +470,7 @@ app.get("/dbscan", function (req, res) {
                                 }
                             })
                         }
-                    });*/
+                    });
                 } else {
                     res.send("error3");
                 }
