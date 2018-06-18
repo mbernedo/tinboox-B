@@ -297,7 +297,7 @@ app.get("/getClusters", function (req, res) {
                     res.send(rpta);
                 }
             })
-    }else if (tipo = "dbscan") {
+    } else if (tipo = "dbscan") {
         pool.query("select distinct u.idusuario, u.nombre, u.apellido from clusters3 c " +
             "join usuariolibro ul on c.idusuariolibro=ul.idusuariolibro " +
             "join usuarios u on ul.idusuario=u.idusuario " +
@@ -433,8 +433,8 @@ app.get("/dbscan", function (req, res) {
     var data = [];
     var obj = [];
     pool.query("SELECT ul.idusuariolibro, u.idusuario as usuario, l.numeropag, l.genero, l.editorial, l.autor FROM usuariolibro ul " +
-    "join libros l on ul.idlibro=l.idlibro " +
-    "join usuarios u on ul.idusuario=u.idusuario order by ul.idusuariolibro", function (err, results, fields) {
+        "join libros l on ul.idlibro=l.idlibro " +
+        "join usuarios u on ul.idusuario=u.idusuario order by ul.idusuariolibro", function (err, results, fields) {
             if (err) {
                 res.send("error");
             } else {
@@ -446,11 +446,18 @@ app.get("/dbscan", function (req, res) {
                     var clusters = dbscan.run(obj, 10, 3);
                     var insert = [];
                     var obj2 = [];
-                    clusters.forEach(function(clust, index){
-                        clust.forEach(function(item, index2){
-                            obj2=[obj[item][0],index];
+                    clusters.forEach(function (clust, index) {
+                        clust.forEach(function (item, index2) {
+                            obj2 = [obj[item][0], index];
                             insert.push(obj2);
                         })
+                    })
+                    var ruidos = dbscan.noise;
+                    var insert2 = [];
+                    var obj3 = [];
+                    ruidos.forEach(function (item, index) {
+                        obj3 = [obj[item][0]];
+                        insert2.push(obj3);
                     })
                     pool.query("DELETE FROM clusters3", function (err, results, fields) {
                         if (err) {
@@ -464,7 +471,13 @@ app.get("/dbscan", function (req, res) {
                                         if (err) {
                                             res.send("error2");
                                         } else {
-                                            res.send("ok");
+                                            pool.query("INSERT INTO ruidosos (idsuariolibro) VALUES ?", [insert2], function (err2, result, fields) {
+                                                if (err2) {
+                                                    res.send("error3");
+                                                } else {
+                                                    res.send("ok");
+                                                }
+                                            })
                                         }
                                     })
                                 }
