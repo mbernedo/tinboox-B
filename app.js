@@ -471,11 +471,23 @@ app.get("/dbscan", function (req, res) {
                                         if (err) {
                                             res.send("error2");
                                         } else {
-                                            pool.query("INSERT INTO ruidosos (idsuariolibro) VALUES ?", [insert2], function (err2, result, fields) {
-                                                if (err2) {
-                                                    res.send("error3");
-                                                } else {
-                                                    res.send("ok");
+                                            pool.query("DELETE FROM ruidosos", function(err, results, fields){
+                                                if(err){
+                                                    console.log(err);
+                                                }else{
+                                                    pool.query("ALTER TABLE ruidosos AUTO_INCREMENT=1", function(err, results, fields){
+                                                        if(err){
+                                                            console.log(err);
+                                                        }else{
+                                                            pool.query("INSERT INTO ruidosos (idsuariolibro) VALUES ?", [insert2], function(err, results, fields){
+                                                                if(err){
+                                                                    res.send("error3");
+                                                                }else{
+                                                                    res.send("ok");
+                                                                }
+                                                            })
+                                                        }
+                                                    })
                                                 }
                                             })
                                         }
