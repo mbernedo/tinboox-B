@@ -459,7 +459,6 @@ app.get("/dbscan", function (req, res) {
                         obj3 = [obj[item][0]];
                         insert2.push(obj3);
                     })
-                    console.log(ruidos.length);
                     pool.query("DELETE FROM clusters3", function (err, results, fields) {
                         if (err) {
                             console.log(err);
