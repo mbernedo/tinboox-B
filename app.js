@@ -443,7 +443,7 @@ app.get("/dbscan", function (req, res) {
                         data = [item.usuario, item.genero, item.numeropag, item.editorial];
                         obj.push(data);
                     });
-                    var clusters = dbscan.run(obj, 10, 3);
+                    var clusters = dbscan.run(obj, 15, 3);
                     var insert = [];
                     var obj2 = [];
                     clusters.forEach(function (clust, index) {
@@ -459,6 +459,7 @@ app.get("/dbscan", function (req, res) {
                         obj3 = [obj[item][0]];
                         insert2.push(obj3);
                     })
+                    console.log(ruidos.length);
                     pool.query("DELETE FROM clusters3", function (err, results, fields) {
                         if (err) {
                             console.log(err);
